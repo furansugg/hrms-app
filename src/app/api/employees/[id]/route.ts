@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Permissions, handleError, requireRole } from "@/lib/rbac";
+import { Permissions, handleError, requireRole, requireSession, hasRole } from "@/lib/rbac";
 import { employeeUpdateSchema } from "@/lib/validation";
 import { audit, getClientIp } from "@/lib/audit";
 import { hashPassword } from "@/lib/password";
+import { Role } from "@/lib/constants";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
-    await requireRole(...Permissions.manageEmployees);
+    const session = await requireSession();
     const employee = await prisma.employee.findUnique({
       where: { id: params.id },
       include: {
@@ -18,6 +19,16 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       },
     });
     if (!employee) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const isHR = hasRole(session.user.role, Permissions.manageEmployees);
+    const isSelf = session.user.employeeId === employee.id;
+    const isSupervisor =
+      session.user.role === Role.MANAGER &&
+      !!session.user.employeeId &&
+      employee.supervisorId === session.user.employeeId;
+    if (!isHR && !isSelf && !isSupervisor) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     return NextResponse.json(employee);
   } catch (err) {
     return handleError(err);
