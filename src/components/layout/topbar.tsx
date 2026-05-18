@@ -4,11 +4,13 @@ import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RoleLabels } from "@/lib/constants";
+import { LangSwitcher } from "@/components/lang-switcher";
+import { useT } from "@/lib/i18n/provider";
 import Link from "next/link";
 
 export function Topbar() {
   const { data: session } = useSession();
+  const { t } = useT();
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -50,12 +52,13 @@ export function Topbar() {
           {session?.user?.name ?? session?.user?.email}
         </div>
         <div className="text-xs text-slate-500">
-          {session?.user?.role ? RoleLabels[session.user.role] : ""}
+          {session?.user?.role ? t(`role.${session.user.role}`) : ""}
         </div>
       </div>
+      <LangSwitcher />
       <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/login" })}>
         <LogOut className="h-4 w-4" />
-        <span className="hidden sm:inline">Sign out</span>
+        <span className="hidden sm:inline">{t("topbar.signOut")}</span>
       </Button>
     </header>
   );

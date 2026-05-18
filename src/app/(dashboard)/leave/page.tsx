@@ -27,7 +27,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
-import { LeaveStatus, LeaveType, LeaveTypeLabels, Role } from "@/lib/constants";
+import { LeaveStatus, LeaveType, Role } from "@/lib/constants";
+import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
 
 type Leave = {
@@ -50,6 +51,7 @@ type Leave = {
 
 export default function LeavePage() {
   const { data: session } = useSession();
+  const { t } = useT();
   const role = session?.user?.role;
   const isHR = role === Role.SUPER_ADMIN || role === Role.HR_ADMIN;
   const [tab, setTab] = useState<"mine" | "team" | "all">("mine");
@@ -66,10 +68,11 @@ export default function LeavePage() {
 
   const availableTabs = useMemo(() => {
     const tabs: { key: "mine" | "team" | "all"; label: string }[] = [];
-    if (session?.user?.employeeId) tabs.push({ key: "mine", label: "My Requests" });
-    if (role === Role.MANAGER) tabs.push({ key: "team", label: "Team Approvals" });
-    if (isHR) tabs.push({ key: "all", label: "All / HR Approvals" });
+    if (session?.user?.employeeId) tabs.push({ key: "mine", label: t("leave.scopeMine") });
+    if (role === Role.MANAGER) tabs.push({ key: "team", label: t("leave.scopeTeam") });
+    if (isHR) tabs.push({ key: "all", label: t("leave.scopeAll") });
     return tabs;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, isHR, session?.user?.employeeId]);
 
   async function load() {
@@ -94,8 +97,8 @@ export default function LeavePage() {
       body: JSON.stringify(form),
     });
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) return toast.error(d.error ?? "Failed");
-    toast.success("Leave request submitted");
+    if (!res.ok) return toast.error(d.error ?? t("common.failed"));
+    toast.success(t("leave.toastCreated"));
     setOpen(false);
     setForm({ type: LeaveType.ANNUAL, startDate: "", endDate: "", reason: "" });
     load();
@@ -110,8 +113,8 @@ export default function LeavePage() {
       body: JSON.stringify({ decision: action, note }),
     });
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) return toast.error(d.error ?? "Failed");
-    toast.success(`Leave ${action === "APPROVE" ? "approved" : "rejected"}`);
+    if (!res.ok) return toast.error(d.error ?? t("common.failed"));
+    toast.success(t("leave.toastDecided"));
     setDecideOpen(null);
     setNote("");
     load();
@@ -120,12 +123,12 @@ export default function LeavePage() {
   return (
     <div>
       <PageHeader
-        title="Leave"
-        description="Request and manage leave with multi-level approval"
+        title={t("leave.title")}
+        description={t("leave.subtitle")}
         actions={
           session?.user?.employeeId && (
             <Button onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" /> Request Leave
+              <Plus className="h-4 w-4" /> {t("leave.new")}
             </Button>
           )
         }
@@ -149,21 +152,21 @@ export default function LeavePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>From</TableHead>
-                <TableHead>To</TableHead>
-                <TableHead>Days</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("leave.colEmployee")}</TableHead>
+                <TableHead>{t("leave.colType")}</TableHead>
+                <TableHead>{t("common.from")}</TableHead>
+                <TableHead>{t("common.to")}</TableHead>
+                <TableHead>{t("leave.colDays")}</TableHead>
+                <TableHead>{t("leave.colReason")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-slate-500">
-                    No requests.
+                    {t("leave.none")}
                   </TableCell>
                 </TableRow>
               )}
@@ -179,7 +182,7 @@ export default function LeavePage() {
                 return (
                   <TableRow key={l.id}>
                     <TableCell className="font-medium">{l.employee.fullName}</TableCell>
-                    <TableCell>{LeaveTypeLabels[l.type as keyof typeof LeaveTypeLabels]}</TableCell>
+                    <TableCell>{t(`leaveType.${l.type}`)}</TableCell>
                     <TableCell>{formatDate(l.startDate)}</TableCell>
                     <TableCell>{formatDate(l.endDate)}</TableCell>
                     <TableCell>{l.days}</TableCell>
@@ -220,38 +223,37 @@ export default function LeavePage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Request Leave</DialogTitle>
+            <DialogTitle>{t("leave.dialogTitle")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Type</Label>
+              <Label>{t("leave.fieldType")}</Label>
               <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                {Object.entries(LeaveTypeLabels).map(([v, label]) => (
-                  <option key={v} value={v}>
-                    {label}
-                  </option>
-                ))}
+                <option value={LeaveType.ANNUAL}>{t("leaveType.ANNUAL")}</option>
+                <option value={LeaveType.SICK}>{t("leaveType.SICK")}</option>
+                <option value={LeaveType.EMERGENCY}>{t("leaveType.EMERGENCY")}</option>
+                <option value={LeaveType.UNPAID}>{t("leaveType.UNPAID")}</option>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>From</Label>
+                <Label>{t("common.from")}</Label>
                 <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} required />
               </div>
               <div className="space-y-2">
-                <Label>To</Label>
+                <Label>{t("common.to")}</Label>
                 <Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} required />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Reason</Label>
+              <Label>{t("leave.fieldReason")}</Label>
               <Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} required />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">{t("common.create")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -261,25 +263,31 @@ export default function LeavePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {decideOpen?.action === "APPROVE" ? "Approve" : "Reject"} Leave Request
+              {decideOpen?.stage === "manager"
+                ? decideOpen?.action === "APPROVE"
+                  ? t("leave.approveManager")
+                  : t("leave.rejectManager")
+                : decideOpen?.action === "APPROVE"
+                ? t("leave.approveHR")
+                : t("leave.rejectHR")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-slate-600">
               {decideOpen?.leave.employee.fullName} —{" "}
-              {decideOpen ? LeaveTypeLabels[decideOpen.leave.type as keyof typeof LeaveTypeLabels] : ""} (
-              {decideOpen?.leave.days}d)
+              {decideOpen ? t(`leaveType.${decideOpen.leave.type}`) : ""} (
+              {decideOpen?.leave.days} {t("common.daysSuffix")})
             </p>
             <div className="space-y-2">
-              <Label>Note (optional)</Label>
+              <Label>{t("common.note")} ({t("common.optional")})</Label>
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDecideOpen(null)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button onClick={decide} variant={decideOpen?.action === "REJECT" ? "destructive" : "default"}>
-                {decideOpen?.action === "APPROVE" ? "Approve" : "Reject"}
+                {decideOpen?.action === "APPROVE" ? t("leaveStatus.APPROVED") : t("leaveStatus.REJECTED")}
               </Button>
             </DialogFooter>
           </div>
@@ -290,9 +298,10 @@ export default function LeavePage() {
 }
 
 function LeaveBadge({ status }: { status: string }) {
-  if (status === LeaveStatus.APPROVED) return <Badge variant="success">Approved</Badge>;
-  if (status === LeaveStatus.REJECTED) return <Badge variant="destructive">Rejected</Badge>;
-  if (status === LeaveStatus.MANAGER_APPROVED) return <Badge variant="info">Manager OK</Badge>;
-  if (status === LeaveStatus.CANCELLED) return <Badge variant="secondary">Cancelled</Badge>;
-  return <Badge variant="warning">Pending</Badge>;
+  const { t } = useT();
+  if (status === LeaveStatus.APPROVED) return <Badge variant="success">{t("leaveStatus.APPROVED")}</Badge>;
+  if (status === LeaveStatus.REJECTED) return <Badge variant="destructive">{t("leaveStatus.REJECTED")}</Badge>;
+  if (status === LeaveStatus.MANAGER_APPROVED) return <Badge variant="info">{t("leaveStatus.MANAGER_APPROVED")}</Badge>;
+  if (status === LeaveStatus.CANCELLED) return <Badge variant="secondary">{t("leaveStatus.CANCELLED")}</Badge>;
+  return <Badge variant="warning">{t("leaveStatus.PENDING")}</Badge>;
 }

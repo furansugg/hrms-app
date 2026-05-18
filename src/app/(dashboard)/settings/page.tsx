@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
+import { useT } from "@/lib/i18n/provider";
 
 type Settings = {
   companyName: string;
@@ -38,6 +39,7 @@ const empty: Settings = {
 };
 
 export default function SettingsPage() {
+  const { t } = useT();
   const [form, setForm] = useState<Settings>(empty);
   const [loading, setLoading] = useState(false);
 
@@ -61,33 +63,33 @@ export default function SettingsPage() {
     });
     setLoading(false);
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) return toast.error(d.error ?? "Failed");
-    toast.success("Settings updated");
+    if (!res.ok) return toast.error(d.error ?? t("common.failed"));
+    toast.success(t("settings.toastSaved"));
   }
 
   return (
     <div>
-      <PageHeader title="Settings" description="Company-wide configuration" />
+      <PageHeader title={t("settings.title")} description={t("settings.subtitle")} />
       <form onSubmit={submit} className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>Company</CardTitle>
-            <CardDescription>Information used on payslips and reports</CardDescription>
+            <CardTitle>{t("common.name")}</CardTitle>
+            <CardDescription>{t("settings.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2 sm:col-span-2">
-              <Label>Company Name</Label>
+              <Label>{t("settings.companyName")}</Label>
               <Input value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} required />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label>Address</Label>
+              <Label>{t("common.notes")}</Label>
               <Textarea
                 value={form.companyAddress ?? ""}
                 onChange={(e) => setForm({ ...form, companyAddress: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>{t("common.email")}</Label>
               <Input
                 type="email"
                 value={form.companyEmail ?? ""}
@@ -95,7 +97,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Phone</Label>
+              <Label>{t("employees.phone")}</Label>
               <Input value={form.companyPhone ?? ""} onChange={(e) => setForm({ ...form, companyPhone: e.target.value })} />
             </div>
             <div className="space-y-2 sm:col-span-2">
@@ -106,23 +108,23 @@ export default function SettingsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Work Hours & Leave</CardTitle>
+            <CardTitle>{t("settings.workStart")} / {t("nav.leave")}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-2">
-              <Label>Work Start (HH:mm)</Label>
+              <Label>{t("settings.workStart")}</Label>
               <Input value={form.workStartTime} onChange={(e) => setForm({ ...form, workStartTime: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Work End (HH:mm)</Label>
+              <Label>{t("settings.workEnd")}</Label>
               <Input value={form.workEndTime} onChange={(e) => setForm({ ...form, workEndTime: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Late Threshold (HH:mm)</Label>
+              <Label>{t("settings.lateThreshold")}</Label>
               <Input value={form.lateThresholdTime} onChange={(e) => setForm({ ...form, lateThresholdTime: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Annual Leave Default (days)</Label>
+              <Label>{t("settings.annualLeaveDays")}</Label>
               <Input
                 type="number"
                 value={form.annualLeaveDefault}
@@ -130,11 +132,11 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Currency</Label>
+              <Label>{t("settings.currency")}</Label>
               <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Late Deduction per Day</Label>
+              <Label>{t("settings.lateDeduction")}</Label>
               <Input
                 type="number"
                 value={form.lateDeductionPerDay}
@@ -145,7 +147,7 @@ export default function SettingsPage() {
         </Card>
         <div className="flex justify-end">
           <Button type="submit" disabled={loading}>
-            {loading ? "Saving…" : "Save Settings"}
+            {loading ? t("common.loading") : t("settings.save")}
           </Button>
         </div>
       </form>
