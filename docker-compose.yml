@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  hrms:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/hrms.db
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=change-me-in-production
+    volumes:
+      - hrms-data:/app/data
+      - hrms-uploads:/app/public/uploads
+    restart: unless-stopped
+
+volumes:
+  hrms-data:
+  hrms-uploads:
