@@ -99,7 +99,9 @@ const en: Dict = {
   "nav.reports": "Reports",
   "nav.notifications": "Notifications",
   "nav.auditLogs": "Audit Logs",
+  "nav.import": "Import",
   "nav.settings": "Settings",
+  "nav.profile": "My Profile",
 
   // Topbar
   "topbar.signOut": "Sign out",
@@ -144,6 +146,11 @@ const en: Dict = {
   "dashboard.yourRecentLeaves": "Your Recent Leave Requests",
   "dashboard.requestLeave": "Request leave →",
   "dashboard.attendanceInOut": "in {in} · out {out}",
+  "dashboard.employeesByDept": "Employees by Department",
+  "dashboard.activeDepts": "Active departments",
+  "dashboard.leaveByStatus": "Leave Requests by Status",
+  "dashboard.last6Months": "Last 6 months",
+  "dashboard.noData": "No data.",
 
   // Employees page
   "employees.title": "Employees",
@@ -418,7 +425,9 @@ const id: Dict = {
   "nav.reports": "Laporan",
   "nav.notifications": "Notifikasi",
   "nav.auditLogs": "Log Audit",
+  "nav.import": "Impor",
   "nav.settings": "Pengaturan",
+  "nav.profile": "Profil Saya",
 
   // Topbar
   "topbar.signOut": "Keluar",
@@ -463,6 +472,11 @@ const id: Dict = {
   "dashboard.yourRecentLeaves": "Pengajuan Cuti Anda Terbaru",
   "dashboard.requestLeave": "Ajukan cuti →",
   "dashboard.attendanceInOut": "masuk {in} · keluar {out}",
+  "dashboard.employeesByDept": "Karyawan per Departemen",
+  "dashboard.activeDepts": "Departemen aktif",
+  "dashboard.leaveByStatus": "Pengajuan Cuti per Status",
+  "dashboard.last6Months": "6 bulan terakhir",
+  "dashboard.noData": "Tidak ada data.",
 
   // Employees page
   "employees.title": "Karyawan",

@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,6 +76,9 @@ function LoginForm() {
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? t("login.signingIn") : t("login.signIn")}
       </Button>
+      <div className="text-center text-sm">
+        <Link href="/forgot-password" className="text-emerald-700 hover:underline">Forgot password?</Link>
+      </div>
     </form>
   );
 }

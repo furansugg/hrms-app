@@ -31,22 +31,31 @@ export async function GET(req: Request) {
       where.employeeId = employeeId;
     }
 
-    const items = await prisma.payroll.findMany({
-      where,
-      orderBy: [{ period: "desc" }, { generatedAt: "desc" }],
-      include: {
-        employee: {
-          select: {
-            id: true,
-            fullName: true,
-            nik: true,
-            department: { select: { name: true } },
-            position: { select: { name: true } },
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.payroll.findMany({
+        where,
+        orderBy: [{ period: "desc" }, { generatedAt: "desc" }],
+        skip,
+        take: limit,
+        include: {
+          employee: {
+            select: {
+              id: true,
+              fullName: true,
+              nik: true,
+              department: { select: { name: true } },
+              position: { select: { name: true } },
+            },
           },
         },
-      },
-    });
-    return NextResponse.json({ items });
+      }),
+      prisma.payroll.count({ where }),
+    ]);
+    return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     return handleError(err);
   }

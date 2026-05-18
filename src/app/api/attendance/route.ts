@@ -33,13 +33,21 @@ export async function GET(req: Request) {
       where.employeeId = { in: access.ids };
     }
 
-    const items = await prisma.attendance.findMany({
-      where,
-      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-      include: { employee: { select: { id: true, fullName: true, nik: true } } },
-      take: 500,
-    });
-    return NextResponse.json({ items });
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.attendance.findMany({
+        where,
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+        include: { employee: { select: { id: true, fullName: true, nik: true } } },
+        skip,
+        take: limit,
+      }),
+      prisma.attendance.count({ where }),
+    ]);
+    return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     return handleError(err);
   }

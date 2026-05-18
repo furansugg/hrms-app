@@ -2,16 +2,19 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { Bell, LogOut } from "lucide-react";
+import { Bell, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LangSwitcher } from "@/components/lang-switcher";
 import { useT } from "@/lib/i18n/provider";
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 export function Topbar() {
   const { data: session } = useSession();
   const { t } = useT();
   const [unread, setUnread] = useState(0);
+  const { locale, setLocale } = useLanguage();
 
   useEffect(() => {
     let cancelled = false;
@@ -20,7 +23,7 @@ export function Topbar() {
         const res = await fetch("/api/notifications?unread=true", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        if (!cancelled) setUnread((data.items ?? []).length);
+        if (!cancelled) setUnread(data.total ?? (data.items ?? []).length);
       } catch {
         // ignore
       }
@@ -36,6 +39,14 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4 md:px-6">
       <div className="flex-1" />
+      <button
+        type="button"
+        className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-slate-700 hover:bg-slate-100"
+        onClick={() => setLocale(locale === "en" ? "id" : "en" as Locale)}
+      >
+        <Globe className="h-4 w-4" />
+        {locale === "en" ? "EN" : "ID"}
+      </button>
       <Link
         href="/notifications"
         className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"

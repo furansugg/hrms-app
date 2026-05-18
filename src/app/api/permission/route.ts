@@ -32,22 +32,31 @@ export async function GET(req: Request) {
     } else if (!access.all) {
       where.employeeId = { in: access.ids };
     }
-    const items = await prisma.permissionRequest.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      include: {
-        employee: {
-          select: {
-            id: true,
-            fullName: true,
-            nik: true,
-            supervisorId: true,
-            supervisor: { select: { id: true, fullName: true, userId: true } },
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.permissionRequest.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          employee: {
+            select: {
+              id: true,
+              fullName: true,
+              nik: true,
+              supervisorId: true,
+              supervisor: { select: { id: true, fullName: true, userId: true } },
+            },
           },
         },
-      },
-    });
-    return NextResponse.json({ items });
+      }),
+      prisma.permissionRequest.count({ where }),
+    ]);
+    return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     return handleError(err);
   }

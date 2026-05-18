@@ -21,6 +21,7 @@ import { PageHeader } from "@/components/page-header";
 import { Role } from "@/lib/constants";
 import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Attendance = {
   id: string;
@@ -40,6 +41,8 @@ export default function AttendancePage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   async function load() {
     setLoading(true);
@@ -47,9 +50,11 @@ export default function AttendancePage() {
       const params = new URLSearchParams();
       if (from) params.set("from", from);
       if (to) params.set("to", to);
+      params.set("page", String(page));
       const res = await fetch("/api/attendance?" + params.toString(), { cache: "no-store" });
       const data = await res.json();
       setItems(data.items ?? []);
+      setTotalPages(data.totalPages ?? 1);
     } finally {
       setLoading(false);
     }
@@ -57,7 +62,7 @@ export default function AttendancePage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
   async function checkIn() {
     const res = await fetch("/api/attendance/check-in", { method: "POST" });
@@ -166,6 +171,7 @@ export default function AttendancePage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

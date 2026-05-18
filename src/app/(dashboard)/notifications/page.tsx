@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Notif = {
   id: string;
@@ -24,15 +25,19 @@ type Notif = {
 export default function NotificationsPage() {
   const { t } = useT();
   const [items, setItems] = useState<Notif[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   async function load() {
-    const res = await fetch("/api/notifications", { cache: "no-store" });
+    const res = await fetch(`/api/notifications?page=${page}`, { cache: "no-store" });
     const data = await res.json();
     setItems(data.items ?? []);
+    setTotalPages(data.totalPages ?? 1);
   }
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   async function markAll() {
     await fetch("/api/notifications", {
@@ -92,6 +97,7 @@ export default function NotificationsPage() {
           </ul>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

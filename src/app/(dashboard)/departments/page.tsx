@@ -27,6 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { Role } from "@/lib/constants";
+import { Pagination } from "@/components/ui/pagination";
 import { useT } from "@/lib/i18n/provider";
 
 type Dept = {
@@ -47,20 +48,24 @@ export default function DepartmentsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Dept | null>(null);
   const [form, setForm] = useState({ code: "", name: "", isActive: true });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/departments", { cache: "no-store" });
+      const res = await fetch(`/api/departments?page=${page}`, { cache: "no-store" });
       const data = await res.json();
       setItems(data.items ?? []);
+      setTotalPages(data.totalPages ?? 1);
     } finally {
       setLoading(false);
     }
   }
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   function openCreate() {
     setEditing(null);
@@ -168,6 +173,7 @@ export default function DepartmentsPage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

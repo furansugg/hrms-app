@@ -17,6 +17,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Log = {
   id: string;
@@ -37,19 +38,23 @@ export default function AuditLogsPage() {
   const [items, setItems] = useState<Log[]>([]);
   const [entity, setEntity] = useState("");
   const [action, setAction] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   async function load() {
     const params = new URLSearchParams();
     if (entity) params.set("entity", entity);
     if (action) params.set("action", action);
+    params.set("page", String(page));
     const res = await fetch("/api/audit-logs?" + params.toString(), { cache: "no-store" });
     const data = await res.json();
     setItems(data.items ?? []);
+    setTotalPages(data.totalPages ?? 1);
   }
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
   return (
     <div>
@@ -114,6 +119,7 @@ export default function AuditLogsPage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

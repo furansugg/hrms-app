@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,7 @@ import { PageHeader } from "@/components/page-header";
 import { LeaveStatus, LeaveType, Role } from "@/lib/constants";
 import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Leave = {
   id: string;
@@ -56,6 +57,8 @@ export default function LeavePage() {
   const isHR = role === Role.SUPER_ADMIN || role === Role.HR_ADMIN;
   const [tab, setTab] = useState<"mine" | "team" | "all">("mine");
   const [items, setItems] = useState<Leave[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     type: LeaveType.ANNUAL as string,
@@ -78,16 +81,18 @@ export default function LeavePage() {
   async function load() {
     const params = new URLSearchParams();
     params.set("scope", tab);
+    params.set("page", String(page));
     const res = await fetch("/api/leave?" + params.toString(), { cache: "no-store" });
     const data = await res.json();
     setItems(data.items ?? []);
+    setTotalPages(data.totalPages ?? 1);
   }
   useEffect(() => {
     if (availableTabs.length === 0) return;
     if (!availableTabs.find((t) => t.key === tab)) setTab(availableTabs[0].key);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, availableTabs.length]);
+  }, [tab, availableTabs.length, page]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -101,6 +106,15 @@ export default function LeavePage() {
     toast.success(t("leave.toastCreated"));
     setOpen(false);
     setForm({ type: LeaveType.ANNUAL, startDate: "", endDate: "", reason: "" });
+    load();
+  }
+
+  async function cancelLeave(id: string) {
+    if (!confirm("Cancel this leave request?")) return;
+    const res = await fetch(`/api/leave/${id}/cancel`, { method: "POST" });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return toast.error(d.error ?? "Failed");
+    toast.success("Leave request cancelled");
     load();
   }
 
@@ -211,6 +225,13 @@ export default function LeavePage() {
                           </Button>
                         </>
                       )}
+                      {l.status !== LeaveStatus.REJECTED && l.status !== LeaveStatus.CANCELLED && (
+                        (session?.user?.employeeId === l.employee.id || isHR) && (
+                          <Button size="sm" variant="ghost" title="Cancel" onClick={() => cancelLeave(l.id)}>
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                        )
+                      )}
                     </TableCell>
                   </TableRow>
                 );
@@ -219,6 +240,7 @@ export default function LeavePage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

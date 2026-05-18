@@ -30,6 +30,7 @@ import { PageHeader } from "@/components/page-header";
 import { PermissionStatus, PermissionType, Role } from "@/lib/constants";
 import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Perm = {
   id: string;
@@ -48,6 +49,8 @@ export default function PermissionsPage() {
   const isHR = role === Role.SUPER_ADMIN || role === Role.HR_ADMIN;
   const [tab, setTab] = useState<"mine" | "team" | "all">("mine");
   const [items, setItems] = useState<Perm[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ type: PermissionType.LATE_ARRIVAL as string, date: "", reason: "" });
   const [decideOpen, setDecideOpen] = useState<{ p: Perm; action: "APPROVE" | "REJECT" } | null>(null);
@@ -65,16 +68,18 @@ export default function PermissionsPage() {
   async function load() {
     const params = new URLSearchParams();
     params.set("scope", tab);
+    params.set("page", String(page));
     const res = await fetch("/api/permission?" + params.toString(), { cache: "no-store" });
     const data = await res.json();
     setItems(data.items ?? []);
+    setTotalPages(data.totalPages ?? 1);
   }
   useEffect(() => {
     if (availableTabs.length === 0) return;
     if (!availableTabs.find((t) => t.key === tab)) setTab(availableTabs[0].key);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, availableTabs.length]);
+  }, [tab, availableTabs.length, page]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -184,6 +189,7 @@ export default function PermissionsPage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
