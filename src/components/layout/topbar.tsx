@@ -18,7 +18,7 @@ export function Topbar() {
         const res = await fetch("/api/notifications?unread=true", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        if (!cancelled) setUnread((data.items ?? []).length);
+        if (!cancelled) setUnread(data.total ?? (data.items ?? []).length);
       } catch {
         // ignore
       }

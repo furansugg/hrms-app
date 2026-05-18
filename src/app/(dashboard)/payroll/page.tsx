@@ -26,6 +26,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { Role } from "@/lib/constants";
 import { formatCurrency, getCurrentPeriod } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Payroll = {
   id: string;
@@ -50,6 +51,8 @@ export default function PayrollPage() {
   const role = session?.user?.role;
   const canGenerate = role === Role.SUPER_ADMIN || role === Role.HR_ADMIN;
   const [items, setItems] = useState<Payroll[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [period, setPeriod] = useState(getCurrentPeriod());
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ period: getCurrentPeriod(), defaultAllowances: 0 });
@@ -57,14 +60,16 @@ export default function PayrollPage() {
   async function load() {
     const params = new URLSearchParams();
     if (period) params.set("period", period);
+    params.set("page", String(page));
     const res = await fetch("/api/payroll?" + params.toString(), { cache: "no-store" });
     const data = await res.json();
     setItems(data.items ?? []);
+    setTotalPages(data.totalPages ?? 1);
   }
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period]);
+  }, [period, page]);
 
   async function generate(e: React.FormEvent) {
     e.preventDefault();
@@ -161,6 +166,7 @@ export default function PayrollPage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

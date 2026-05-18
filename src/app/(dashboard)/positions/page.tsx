@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { Role } from "@/lib/constants";
+import { Pagination } from "@/components/ui/pagination";
 
 type Pos = {
   id: string;
@@ -46,18 +47,22 @@ export default function PositionsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Pos | null>(null);
   const [form, setForm] = useState({ code: "", name: "", departmentId: "", isActive: true });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   async function load() {
     const [p, d] = await Promise.all([
-      fetch("/api/positions", { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/departments", { cache: "no-store" }).then((r) => r.json()),
+      fetch(`/api/positions?page=${page}`, { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/departments?limit=100", { cache: "no-store" }).then((r) => r.json()),
     ]);
     setItems(p.items ?? []);
+    setTotalPages(p.totalPages ?? 1);
     setDepts(d.items ?? []);
   }
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   function openCreate() {
     setEditing(null);
@@ -163,6 +168,7 @@ export default function PositionsPage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

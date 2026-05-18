@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Eye } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { Role, RoleLabels, EmployeeStatus } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Employee = {
   id: string;
@@ -35,6 +37,7 @@ type Employee = {
   fullName: string;
   email: string;
   phone: string | null;
+  address: string | null;
   basicSalary: number;
   status: string;
   department: { id: string; name: string };
@@ -52,6 +55,8 @@ export default function EmployeesPage() {
   const [q, setQ] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [depts, setDepts] = useState<Option[]>([]);
   const [positions, setPositions] = useState<Option[]>([]);
   const [open, setOpen] = useState(false);
@@ -77,19 +82,21 @@ export default function EmployeesPage() {
     if (q) params.set("q", q);
     if (departmentFilter) params.set("departmentId", departmentFilter);
     if (statusFilter) params.set("status", statusFilter);
+    params.set("page", String(page));
     const [e, d, p] = await Promise.all([
       fetch("/api/employees?" + params.toString(), { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/departments", { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/positions", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/departments?limit=100", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/positions?limit=100", { cache: "no-store" }).then((r) => r.json()),
     ]);
     setItems(e.items ?? []);
+    setTotalPages(e.totalPages ?? 1);
     setDepts((d.items ?? []).filter((x: Option) => x.isActive));
     setPositions((p.items ?? []).filter((x: Option) => x.isActive));
   }
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [departmentFilter, statusFilter]);
+  }, [departmentFilter, statusFilter, page]);
 
   function openCreate() {
     setEditing(null);
@@ -118,7 +125,7 @@ export default function EmployeesPage() {
       fullName: emp.fullName,
       email: emp.email,
       phone: emp.phone ?? "",
-      address: "",
+      address: emp.address ?? "",
       departmentId: emp.department.id,
       positionId: emp.position.id,
       supervisorId: emp.supervisor?.id ?? "",
@@ -238,7 +245,9 @@ export default function EmployeesPage() {
               {items.map((emp) => (
                 <TableRow key={emp.id}>
                   <TableCell className="font-mono text-xs">{emp.nik}</TableCell>
-                  <TableCell className="font-medium">{emp.fullName}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/employees/${emp.id}`} className="hover:underline text-emerald-700">{emp.fullName}</Link>
+                  </TableCell>
                   <TableCell className="text-slate-600">{emp.email}</TableCell>
                   <TableCell>{emp.department.name}</TableCell>
                   <TableCell>{emp.position.name}</TableCell>
@@ -271,6 +280,7 @@ export default function EmployeesPage() {
           </Table>
         </CardContent>
       </Card>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">

@@ -9,20 +9,26 @@ export async function GET(req: Request) {
     const entity = searchParams.get("entity");
     const action = searchParams.get("action");
     const userId = searchParams.get("userId");
-    const take = Math.min(parseInt(searchParams.get("take") ?? "200", 10), 500);
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
+    const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {};
     if (entity) where.entity = entity;
     if (action) where.action = action;
     if (userId) where.userId = userId;
 
-    const items = await prisma.auditLog.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take,
-      include: { user: { select: { email: true, role: true } } },
-    });
-    return NextResponse.json({ items });
+    const [items, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: { user: { select: { email: true, role: true } } },
+      }),
+      prisma.auditLog.count({ where }),
+    ]);
+    return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     return handleError(err);
   }

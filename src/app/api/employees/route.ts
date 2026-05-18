@@ -39,17 +39,26 @@ export async function GET(req: Request) {
       where.id = session.user.employeeId ?? "__none__";
     }
 
-    const items = await prisma.employee.findMany({
-      where,
-      orderBy: { fullName: "asc" },
-      include: {
-        department: { select: { id: true, name: true, code: true } },
-        position: { select: { id: true, name: true, code: true } },
-        supervisor: { select: { id: true, fullName: true } },
-        user: { select: { id: true, email: true, role: true, isActive: true } },
-      },
-    });
-    return NextResponse.json({ items });
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.employee.findMany({
+        where,
+        orderBy: { fullName: "asc" },
+        skip,
+        take: limit,
+        include: {
+          department: { select: { id: true, name: true, code: true } },
+          position: { select: { id: true, name: true, code: true } },
+          supervisor: { select: { id: true, fullName: true } },
+          user: { select: { id: true, email: true, role: true, isActive: true } },
+        },
+      }),
+      prisma.employee.count({ where }),
+    ]);
+    return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     return handleError(err);
   }
