@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Building2, CalendarDays, Wallet, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/rbac";
-import { Role, LeaveStatus, RoleLabels, LeaveTypeLabels } from "@/lib/constants";
+import { Role, LeaveStatus } from "@/lib/constants";
+import { getServerT } from "@/lib/i18n/server";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Link from "next/link";
 
@@ -21,6 +22,7 @@ export default async function DashboardPage() {
 }
 
 async function AdminDashboard() {
+  const { t } = getServerT();
   const [employees, depts, leavesPending, payroll] = await Promise.all([
     prisma.employee.count({ where: { status: "ACTIVE" } }),
     prisma.department.count({ where: { isActive: true } }),
@@ -61,20 +63,20 @@ async function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-slate-500">Overview of company HR activities</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("dashboard.title")}</h1>
+        <p className="text-sm text-slate-500">{t("dashboard.overview")}</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Users} label="Active Employees" value={String(employees)} />
-        <StatCard icon={Building2} label="Departments" value={String(depts)} />
-        <StatCard icon={CalendarDays} label="Pending Leaves" value={String(leavesPending)} />
-        <StatCard icon={Wallet} label="Total Payroll" value={formatCurrency(payroll._sum.netSalary ?? 0)} />
+        <StatCard icon={Users} label={t("dashboard.statActive")} value={String(employees)} />
+        <StatCard icon={Building2} label={t("dashboard.statDepts")} value={String(depts)} />
+        <StatCard icon={CalendarDays} label={t("dashboard.statPendingLeaves")} value={String(leavesPending)} />
+        <StatCard icon={Wallet} label={t("dashboard.statTotalPayroll")} value={formatCurrency(payroll._sum.netSalary ?? 0)} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Employees by Department</CardTitle>
-            <CardDescription>Active departments</CardDescription>
+            <CardTitle>{t("dashboard.employeesByDept")}</CardTitle>
+            <CardDescription>{t("dashboard.activeDepts")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {deptData.map((d) => (
@@ -89,13 +91,13 @@ async function AdminDashboard() {
                 <span className="w-8 text-right font-medium">{d._count.employees}</span>
               </div>
             ))}
-            {deptData.length === 0 && <p className="text-sm text-slate-500">No data.</p>}
+            {deptData.length === 0 && <p className="text-sm text-slate-500">{t("dashboard.noData")}</p>}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Leave Requests by Status</CardTitle>
-            <CardDescription>Last 6 months</CardDescription>
+            <CardTitle>{t("dashboard.leaveByStatus")}</CardTitle>
+            <CardDescription>{t("dashboard.last6Months")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {Object.entries(leaveByStatus).map(([status, count]) => (
@@ -110,7 +112,7 @@ async function AdminDashboard() {
                 <span className="w-8 text-right font-medium">{count}</span>
               </div>
             ))}
-            {Object.keys(leaveByStatus).length === 0 && <p className="text-sm text-slate-500">No data.</p>}
+            {Object.keys(leaveByStatus).length === 0 && <p className="text-sm text-slate-500">{t("dashboard.noData")}</p>}
           </CardContent>
         </Card>
       </div>
@@ -118,46 +120,49 @@ async function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Leave Requests</CardTitle>
-            <CardDescription>Latest leave submissions</CardDescription>
+            <CardTitle>{t("dashboard.recentLeaves")}</CardTitle>
+            <CardDescription>{t("dashboard.recentLeavesSub")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentLeaves.length === 0 && <p className="text-sm text-slate-500">No requests yet.</p>}
+            {recentLeaves.length === 0 && <p className="text-sm text-slate-500">{t("dashboard.noRequests")}</p>}
             {recentLeaves.map((l) => (
               <div key={l.id} className="flex items-center justify-between text-sm">
                 <div>
                   <div className="font-medium">{l.employee.fullName}</div>
                   <div className="text-xs text-slate-500">
-                    {LeaveTypeLabels[l.type as keyof typeof LeaveTypeLabels]} ·{" "}
-                    {formatDate(l.startDate)} → {formatDate(l.endDate)} ({l.days}d)
+                    {t(`leaveType.${l.type}`)} ·{" "}
+                    {formatDate(l.startDate)} → {formatDate(l.endDate)} ({l.days} {t("common.daysSuffix")})
                   </div>
                 </div>
                 <LeaveBadge status={l.status} />
               </div>
             ))}
-            <Link href="/leave" className="inline-block text-xs text-emerald-700 hover:underline">View all →</Link>
+            <Link href="/leave" className="inline-block text-xs text-emerald-700 hover:underline">{t("dashboard.viewAll")}</Link>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Recent Attendance</CardTitle>
-            <CardDescription>Latest check-ins</CardDescription>
+            <CardTitle>{t("dashboard.recentAttendance")}</CardTitle>
+            <CardDescription>{t("dashboard.recentAttendanceSub")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentAttendance.length === 0 && <p className="text-sm text-slate-500">No attendance yet.</p>}
+            {recentAttendance.length === 0 && <p className="text-sm text-slate-500">{t("dashboard.noAttendance")}</p>}
             {recentAttendance.map((a) => (
               <div key={a.id} className="flex items-center justify-between text-sm">
                 <div>
                   <div className="font-medium">{a.employee.fullName}</div>
                   <div className="text-xs text-slate-500">
-                    {formatDate(a.date)} · in {a.checkInAt ? formatDate(a.checkInAt, true).slice(11) : "-"} · out{" "}
-                    {a.checkOutAt ? formatDate(a.checkOutAt, true).slice(11) : "-"}
+                    {formatDate(a.date)} ·{" "}
+                    {t("dashboard.attendanceInOut", {
+                      in: a.checkInAt ? formatDate(a.checkInAt, true).slice(11) : t("common.dash"),
+                      out: a.checkOutAt ? formatDate(a.checkOutAt, true).slice(11) : t("common.dash"),
+                    })}
                   </div>
                 </div>
                 <AttendanceBadge status={a.status} />
               </div>
             ))}
-            <Link href="/attendance" className="inline-block text-xs text-emerald-700 hover:underline">View all →</Link>
+            <Link href="/attendance" className="inline-block text-xs text-emerald-700 hover:underline">{t("dashboard.viewAll")}</Link>
           </CardContent>
         </Card>
       </div>
@@ -166,6 +171,7 @@ async function AdminDashboard() {
 }
 
 async function ManagerDashboard({ userId }: { userId: string }) {
+  const { t } = getServerT();
   const manager = await prisma.user.findUnique({
     where: { id: userId },
     include: { employee: true },
@@ -186,20 +192,20 @@ async function ManagerDashboard({ userId }: { userId: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Manager Dashboard</h1>
-        <p className="text-sm text-slate-500">Welcome, {manager?.employee?.fullName ?? manager?.email}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("dashboard.managerTitle")}</h1>
+        <p className="text-sm text-slate-500">{t("dashboard.welcome", { name: manager?.employee?.fullName ?? manager?.email ?? "" })}</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Users} label="Team Members" value={String(subordinates.length)} />
-        <StatCard icon={CalendarDays} label="Pending Leave Approvals" value={String(pendingLeaves)} />
-        <StatCard icon={Clock} label="Pending Permissions" value={String(pendingPerms)} />
+        <StatCard icon={Users} label={t("dashboard.teamMembers")} value={String(subordinates.length)} />
+        <StatCard icon={CalendarDays} label={t("dashboard.pendingLeaveApprovals")} value={String(pendingLeaves)} />
+        <StatCard icon={Clock} label={t("dashboard.pendingPermissions")} value={String(pendingPerms)} />
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Your team</CardTitle>
+          <CardTitle>{t("dashboard.yourTeam")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {subordinates.length === 0 && <p className="text-sm text-slate-500">No direct reports.</p>}
+          {subordinates.length === 0 && <p className="text-sm text-slate-500">{t("dashboard.noReports")}</p>}
           <ul className="space-y-2">
             {subordinates.map((s) => (
               <li key={s.id} className="flex items-center justify-between text-sm">
@@ -215,6 +221,7 @@ async function ManagerDashboard({ userId }: { userId: string }) {
 }
 
 async function EmployeeDashboard({ userId }: { userId: string }) {
+  const { t } = getServerT();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
@@ -247,49 +254,49 @@ async function EmployeeDashboard({ userId }: { userId: string }) {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Welcome, {user?.employee?.fullName ?? user?.email}
+          {t("dashboard.welcome", { name: user?.employee?.fullName ?? user?.email ?? "" })}
         </h1>
         <p className="text-sm text-slate-500">
-          {user?.employee?.position?.name} · {user?.employee?.department?.name} · {RoleLabels[user?.role as Role]}
+          {user?.employee?.position?.name} · {user?.employee?.department?.name} · {t(`role.${user?.role}`)}
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           icon={Clock}
-          label="Today's Check-in"
-          value={todayAttendance?.checkInAt ? formatDate(todayAttendance.checkInAt, true).slice(11) : "Not yet"}
+          label={t("dashboard.todayCheckin")}
+          value={todayAttendance?.checkInAt ? formatDate(todayAttendance.checkInAt, true).slice(11) : t("dashboard.notYet")}
         />
         <StatCard
           icon={Clock}
-          label="Today's Check-out"
-          value={todayAttendance?.checkOutAt ? formatDate(todayAttendance.checkOutAt, true).slice(11) : "Not yet"}
+          label={t("dashboard.todayCheckout")}
+          value={todayAttendance?.checkOutAt ? formatDate(todayAttendance.checkOutAt, true).slice(11) : t("dashboard.notYet")}
         />
         <StatCard
           icon={CalendarDays}
-          label="Annual Leave Balance"
-          value={`${user?.employee?.annualLeaveBalance ?? 0} days`}
+          label={t("dashboard.annualBalance")}
+          value={`${user?.employee?.annualLeaveBalance ?? 0} ${t("common.daysSuffix")}`}
         />
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Your Recent Leave Requests</CardTitle>
+          <CardTitle>{t("dashboard.yourRecentLeaves")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {recentLeaves.length === 0 && <p className="text-sm text-slate-500">No requests yet.</p>}
+          {recentLeaves.length === 0 && <p className="text-sm text-slate-500">{t("dashboard.noRequests")}</p>}
           {recentLeaves.map((l) => (
             <div key={l.id} className="flex items-center justify-between text-sm">
               <div>
                 <div className="font-medium">
-                  {LeaveTypeLabels[l.type as keyof typeof LeaveTypeLabels]}
+                  {t(`leaveType.${l.type}`)}
                 </div>
                 <div className="text-xs text-slate-500">
-                  {formatDate(l.startDate)} → {formatDate(l.endDate)} ({l.days}d)
+                  {formatDate(l.startDate)} → {formatDate(l.endDate)} ({l.days} {t("common.daysSuffix")})
                 </div>
               </div>
               <LeaveBadge status={l.status} />
             </div>
           ))}
-          <Link href="/leave" className="inline-block text-xs text-emerald-700 hover:underline">Request leave →</Link>
+          <Link href="/leave" className="inline-block text-xs text-emerald-700 hover:underline">{t("dashboard.requestLeave")}</Link>
         </CardContent>
       </Card>
     </div>
@@ -321,15 +328,17 @@ function StatCard({
 }
 
 function LeaveBadge({ status }: { status: string }) {
-  if (status === LeaveStatus.APPROVED) return <Badge variant="success">Approved</Badge>;
-  if (status === LeaveStatus.REJECTED) return <Badge variant="destructive">Rejected</Badge>;
-  if (status === LeaveStatus.MANAGER_APPROVED) return <Badge variant="info">Manager OK</Badge>;
-  if (status === LeaveStatus.CANCELLED) return <Badge variant="secondary">Cancelled</Badge>;
-  return <Badge variant="warning">Pending</Badge>;
+  const { t } = getServerT();
+  if (status === LeaveStatus.APPROVED) return <Badge variant="success">{t("leaveStatus.APPROVED")}</Badge>;
+  if (status === LeaveStatus.REJECTED) return <Badge variant="destructive">{t("leaveStatus.REJECTED")}</Badge>;
+  if (status === LeaveStatus.MANAGER_APPROVED) return <Badge variant="info">{t("leaveStatus.MANAGER_APPROVED")}</Badge>;
+  if (status === LeaveStatus.CANCELLED) return <Badge variant="secondary">{t("leaveStatus.CANCELLED")}</Badge>;
+  return <Badge variant="warning">{t("leaveStatus.PENDING")}</Badge>;
 }
 
 function AttendanceBadge({ status }: { status: string }) {
-  if (status === "LATE") return <Badge variant="warning">Late</Badge>;
-  if (status === "ABSENT") return <Badge variant="destructive">Absent</Badge>;
-  return <Badge variant="success">Present</Badge>;
+  const { t } = getServerT();
+  if (status === "LATE") return <Badge variant="warning">{t("attendanceStatus.LATE")}</Badge>;
+  if (status === "ABSENT") return <Badge variant="destructive">{t("attendanceStatus.ABSENT")}</Badge>;
+  return <Badge variant="success">{t("attendanceStatus.PRESENT")}</Badge>;
 }

@@ -27,7 +27,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
-import { PermissionStatus, PermissionType, PermissionTypeLabels, Role } from "@/lib/constants";
+import { PermissionStatus, PermissionType, Role } from "@/lib/constants";
+import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -43,6 +44,7 @@ type Perm = {
 
 export default function PermissionsPage() {
   const { data: session } = useSession();
+  const { t } = useT();
   const role = session?.user?.role;
   const isHR = role === Role.SUPER_ADMIN || role === Role.HR_ADMIN;
   const [tab, setTab] = useState<"mine" | "team" | "all">("mine");
@@ -56,10 +58,11 @@ export default function PermissionsPage() {
 
   const availableTabs = useMemo(() => {
     const tabs: { key: "mine" | "team" | "all"; label: string }[] = [];
-    if (session?.user?.employeeId) tabs.push({ key: "mine", label: "My Requests" });
-    if (role === Role.MANAGER) tabs.push({ key: "team", label: "Team Approvals" });
-    if (isHR) tabs.push({ key: "all", label: "All Requests" });
+    if (session?.user?.employeeId) tabs.push({ key: "mine", label: t("leave.scopeMine") });
+    if (role === Role.MANAGER) tabs.push({ key: "team", label: t("leave.scopeTeam") });
+    if (isHR) tabs.push({ key: "all", label: t("leave.scopeAll") });
     return tabs;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, isHR, session?.user?.employeeId]);
 
   async function load() {
@@ -86,8 +89,8 @@ export default function PermissionsPage() {
       body: JSON.stringify(form),
     });
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) return toast.error(d.error ?? "Failed");
-    toast.success("Permission requested");
+    if (!res.ok) return toast.error(d.error ?? t("common.failed"));
+    toast.success(t("permissions.toastCreated"));
     setOpen(false);
     setForm({ type: PermissionType.LATE_ARRIVAL, date: "", reason: "" });
     load();
@@ -100,8 +103,8 @@ export default function PermissionsPage() {
       body: JSON.stringify({ decision: decideOpen.action, note }),
     });
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) return toast.error(d.error ?? "Failed");
-    toast.success(`Permission ${decideOpen.action.toLowerCase()}d`);
+    if (!res.ok) return toast.error(d.error ?? t("common.failed"));
+    toast.success(t("permissions.toastDecided"));
     setDecideOpen(null);
     setNote("");
     load();
@@ -110,12 +113,12 @@ export default function PermissionsPage() {
   return (
     <div>
       <PageHeader
-        title="Permissions"
-        description="Late arrival / early leave permission requests"
+        title={t("permissions.title")}
+        description={t("permissions.subtitle")}
         actions={
           session?.user?.employeeId && (
             <Button onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" /> New Request
+              <Plus className="h-4 w-4" /> {t("permissions.new")}
             </Button>
           )
         }
@@ -132,19 +135,19 @@ export default function PermissionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("permissions.colEmployee")}</TableHead>
+                <TableHead>{t("permissions.colType")}</TableHead>
+                <TableHead>{t("permissions.colDate")}</TableHead>
+                <TableHead>{t("permissions.colReason")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-slate-500">
-                    No requests.
+                    {t("permissions.none")}
                   </TableCell>
                 </TableRow>
               )}
@@ -155,16 +158,16 @@ export default function PermissionsPage() {
                 return (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.employee.fullName}</TableCell>
-                    <TableCell>{PermissionTypeLabels[p.type as keyof typeof PermissionTypeLabels]}</TableCell>
+                    <TableCell>{t(`permissionType.${p.type}`)}</TableCell>
                     <TableCell>{formatDate(p.date)}</TableCell>
                     <TableCell className="max-w-xs truncate">{p.reason}</TableCell>
                     <TableCell>
                       {p.status === PermissionStatus.APPROVED ? (
-                        <Badge variant="success">Approved</Badge>
+                        <Badge variant="success">{t("permissionStatus.APPROVED")}</Badge>
                       ) : p.status === PermissionStatus.REJECTED ? (
-                        <Badge variant="destructive">Rejected</Badge>
+                        <Badge variant="destructive">{t("permissionStatus.REJECTED")}</Badge>
                       ) : (
-                        <Badge variant="warning">Pending</Badge>
+                        <Badge variant="warning">{t("permissionStatus.PENDING")}</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right space-x-1">
@@ -191,32 +194,31 @@ export default function PermissionsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Permission Request</DialogTitle>
+            <DialogTitle>{t("permissions.dialogTitle")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Type</Label>
+              <Label>{t("permissions.fieldType")}</Label>
               <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                {Object.entries(PermissionTypeLabels).map(([v, label]) => (
-                  <option key={v} value={v}>
-                    {label}
-                  </option>
-                ))}
+                <option value={PermissionType.LATE_ARRIVAL}>{t("permissionType.LATE_ARRIVAL")}</option>
+                <option value={PermissionType.EARLY_LEAVE}>{t("permissionType.EARLY_LEAVE")}</option>
+                <option value={PermissionType.OUT_OF_OFFICE}>{t("permissionType.OUT_OF_OFFICE")}</option>
+                <option value={PermissionType.OTHER}>{t("permissionType.OTHER")}</option>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Date</Label>
+              <Label>{t("permissions.fieldDate")}</Label>
               <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>Reason</Label>
+              <Label>{t("permissions.fieldReason")}</Label>
               <Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} required />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">{t("common.create")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -224,19 +226,19 @@ export default function PermissionsPage() {
       <Dialog open={!!decideOpen} onOpenChange={(v) => !v && setDecideOpen(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{decideOpen?.action === "APPROVE" ? "Approve" : "Reject"} Permission</DialogTitle>
+            <DialogTitle>{decideOpen?.action === "APPROVE" ? t("permissions.approve") : t("permissions.reject")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label>Note (optional)</Label>
+              <Label>{t("common.note")} ({t("common.optional")})</Label>
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDecideOpen(null)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button onClick={decide} variant={decideOpen?.action === "REJECT" ? "destructive" : "default"}>
-                {decideOpen?.action === "APPROVE" ? "Approve" : "Reject"}
+                {decideOpen?.action === "APPROVE" ? t("permissions.approve") : t("permissions.reject")}
               </Button>
             </DialogFooter>
           </div>

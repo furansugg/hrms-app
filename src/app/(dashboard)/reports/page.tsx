@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
+import { useT } from "@/lib/i18n/provider";
 import { getCurrentPeriod } from "@/lib/utils";
 
 type Option = { id: string; name: string };
 
 export default function ReportsPage() {
+  const { t } = useT();
   const [type, setType] = useState<"attendance" | "leave" | "payroll">("attendance");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -48,38 +50,38 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <PageHeader title="Reports" description="Export attendance, leave, and payroll data" />
+      <PageHeader title={t("reports.title")} description={t("reports.subtitle")} />
       <Card>
         <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-2">
-            <Label>Report Type</Label>
+            <Label>{t("reports.type")}</Label>
             <Select value={type} onChange={(e) => setType(e.target.value as "attendance" | "leave" | "payroll")}>
-              <option value="attendance">Attendance</option>
-              <option value="leave">Leave</option>
-              <option value="payroll">Payroll</option>
+              <option value="attendance">{t("reports.typeAttendance")}</option>
+              <option value="leave">{t("reports.typeLeave")}</option>
+              <option value="payroll">{t("reports.typePayroll")}</option>
             </Select>
           </div>
           {type === "payroll" ? (
             <div className="space-y-2">
-              <Label>Period</Label>
+              <Label>{t("payroll.period")}</Label>
               <Input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} />
             </div>
           ) : (
             <>
               <div className="space-y-2">
-                <Label>From</Label>
+                <Label>{t("common.from")}</Label>
                 <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>To</Label>
+                <Label>{t("common.to")}</Label>
                 <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
               </div>
             </>
           )}
           <div className="space-y-2">
-            <Label>Department</Label>
+            <Label>{t("common.department")}</Label>
             <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
-              <option value="">All</option>
+              <option value="">{t("common.allDepartments")}</option>
               {depts.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -88,9 +90,9 @@ export default function ReportsPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Employee</Label>
+            <Label>{t("common.allEmployees")}</Label>
             <Select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
-              <option value="">All</option>
+              <option value="">{t("common.allEmployees")}</option>
               {employees.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.name}
@@ -101,12 +103,12 @@ export default function ReportsPage() {
           <div className="sm:col-span-3 flex flex-wrap gap-2 justify-end pt-2">
             <a href={buildUrl("xlsx")} target="_blank" rel="noreferrer">
               <Button>
-                <Download className="h-4 w-4" /> Excel (.xlsx)
+                <Download className="h-4 w-4" /> {t("reports.formatXLSX")}
               </Button>
             </a>
             <a href={buildUrl("pdf")} target="_blank" rel="noreferrer">
               <Button variant="secondary">
-                <Download className="h-4 w-4" /> PDF
+                <Download className="h-4 w-4" /> {t("reports.formatPDF")}
               </Button>
             </a>
           </div>

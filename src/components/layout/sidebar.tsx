@@ -24,34 +24,36 @@ import {
 } from "lucide-react";
 import { Role } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/provider";
 
 type NavItem = {
   href: string;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
   roles: readonly Role[];
 };
 
 const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
-  { href: "/employees", label: "Employees", icon: Users, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER] },
-  { href: "/departments", label: "Departments", icon: Building2, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
-  { href: "/positions", label: "Positions", icon: Briefcase, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
-  { href: "/attendance", label: "Attendance", icon: Clock, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
-  { href: "/leave", label: "Leave", icon: CalendarDays, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
-  { href: "/permissions", label: "Permissions", icon: FileClock, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
-  { href: "/payroll", label: "Payroll", icon: Wallet, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.EMPLOYEE] },
-  { href: "/reports", label: "Reports", icon: FileBarChart, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER] },
-  { href: "/notifications", label: "Notifications", icon: Bell, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
-  { href: "/audit-logs", label: "Audit Logs", icon: ScrollText, roles: [Role.SUPER_ADMIN] },
-  { href: "/import", label: "Import", icon: Upload, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
-  { href: "/settings", label: "Settings", icon: Settings, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
-  { href: "/profile", label: "My Profile", icon: UserCircle, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
+  { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
+  { href: "/employees", labelKey: "nav.employees", icon: Users, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER] },
+  { href: "/departments", labelKey: "nav.departments", icon: Building2, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
+  { href: "/positions", labelKey: "nav.positions", icon: Briefcase, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
+  { href: "/attendance", labelKey: "nav.attendance", icon: Clock, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
+  { href: "/leave", labelKey: "nav.leave", icon: CalendarDays, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
+  { href: "/permissions", labelKey: "nav.permissions", icon: FileClock, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
+  { href: "/payroll", labelKey: "nav.payroll", icon: Wallet, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.EMPLOYEE] },
+  { href: "/reports", labelKey: "nav.reports", icon: FileBarChart, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER] },
+  { href: "/notifications", labelKey: "nav.notifications", icon: Bell, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
+  { href: "/audit-logs", labelKey: "nav.auditLogs", icon: ScrollText, roles: [Role.SUPER_ADMIN] },
+  { href: "/import", labelKey: "nav.import", icon: Upload, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
+  { href: "/settings", labelKey: "nav.settings", icon: Settings, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
+  { href: "/profile", labelKey: "nav.profile", icon: UserCircle, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { t } = useT();
   const role = session?.user?.role;
   const items = role ? NAV.filter((i) => i.roles.includes(role)) : [];
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -110,7 +112,7 @@ export function Sidebar() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </Link>
             );
           })}

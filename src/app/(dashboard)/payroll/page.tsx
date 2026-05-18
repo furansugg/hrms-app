@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page-header";
 import { Role } from "@/lib/constants";
+import { useT } from "@/lib/i18n/provider";
 import { formatCurrency, getCurrentPeriod } from "@/lib/utils";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -48,6 +49,7 @@ type Payroll = {
 
 export default function PayrollPage() {
   const { data: session } = useSession();
+  const { t } = useT();
   const role = session?.user?.role;
   const canGenerate = role === Role.SUPER_ADMIN || role === Role.HR_ADMIN;
   const [items, setItems] = useState<Payroll[]>([]);
@@ -79,8 +81,8 @@ export default function PayrollPage() {
       body: JSON.stringify({ period: form.period, defaultAllowances: Number(form.defaultAllowances) }),
     });
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) return toast.error(d.error ?? "Failed");
-    toast.success(`Generated ${d.generated} payrolls (${d.duplicate} duplicates, ${d.errors} errors)`);
+    if (!res.ok) return toast.error(d.error ?? t("common.failed"));
+    toast.success(t("payroll.toastGenerated", { generated: d.generated, duplicate: d.duplicate, errors: d.errors }));
     setOpen(false);
     setPeriod(form.period);
   }
@@ -90,12 +92,12 @@ export default function PayrollPage() {
   return (
     <div>
       <PageHeader
-        title="Payroll"
-        description="Monthly payroll generation and payslips"
+        title={t("payroll.title")}
+        description={t("payroll.subtitle")}
         actions={
           canGenerate && (
             <Button onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" /> Generate
+              <Plus className="h-4 w-4" /> {t("payroll.generate")}
             </Button>
           )
         }
@@ -103,11 +105,11 @@ export default function PayrollPage() {
       <Card className="mb-4">
         <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
           <div className="space-y-2">
-            <Label>Period</Label>
+            <Label>{t("payroll.period")}</Label>
             <Input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} />
           </div>
           <div className="text-sm text-slate-600 sm:col-span-2 sm:text-right">
-            Total Net: <span className="font-semibold">{formatCurrency(total)}</span>
+            {t("payroll.colNet")}: <span className="font-semibold">{formatCurrency(total)}</span>
           </div>
         </CardContent>
       </Card>
@@ -116,23 +118,23 @@ export default function PayrollPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Position</TableHead>
-                <TableHead>Basic</TableHead>
-                <TableHead>Allowances</TableHead>
-                <TableHead>Deductions</TableHead>
-                <TableHead>Late</TableHead>
-                <TableHead>Unpaid</TableHead>
-                <TableHead>Net</TableHead>
-                <TableHead className="text-right">Payslip</TableHead>
+                <TableHead>{t("payroll.colEmployee")}</TableHead>
+                <TableHead>{t("common.department")}</TableHead>
+                <TableHead>{t("common.position")}</TableHead>
+                <TableHead>{t("payroll.colBasic")}</TableHead>
+                <TableHead>{t("payroll.colAllowances")}</TableHead>
+                <TableHead>{t("payroll.colDeductions")}</TableHead>
+                <TableHead>{t("attendanceStatus.LATE")}</TableHead>
+                <TableHead>{t("leaveType.UNPAID")}</TableHead>
+                <TableHead>{t("payroll.colNet")}</TableHead>
+                <TableHead className="text-right">{t("payroll.colPDF")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center text-slate-500">
-                    No payroll for this period.
+                    {t("payroll.none")}
                   </TableCell>
                 </TableRow>
               )}
@@ -171,11 +173,11 @@ export default function PayrollPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Generate Payroll</DialogTitle>
+            <DialogTitle>{t("payroll.generate")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={generate} className="space-y-4">
             <div className="space-y-2">
-              <Label>Period</Label>
+              <Label>{t("payroll.period")}</Label>
               <Input
                 type="month"
                 value={form.period}
@@ -184,7 +186,7 @@ export default function PayrollPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Default Allowances (per employee)</Label>
+              <Label>{t("payroll.colAllowances")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -194,9 +196,9 @@ export default function PayrollPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">Generate</Button>
+              <Button type="submit">{t("payroll.generate")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

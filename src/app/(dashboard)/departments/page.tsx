@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { Role } from "@/lib/constants";
 import { Pagination } from "@/components/ui/pagination";
+import { useT } from "@/lib/i18n/provider";
 
 type Dept = {
   id: string;
@@ -39,6 +40,7 @@ type Dept = {
 
 export default function DepartmentsPage() {
   const { data: session } = useSession();
+  const { t } = useT();
   const canManage =
     session?.user?.role === Role.SUPER_ADMIN || session?.user?.role === Role.HR_ADMIN;
   const [items, setItems] = useState<Dept[]>([]);
@@ -86,21 +88,21 @@ export default function DepartmentsPage() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      toast.error(data.error ?? "Failed to save");
+      toast.error(data.error ?? t("departments.toastFailedSave"));
       return;
     }
-    toast.success(editing ? "Department updated" : "Department created");
+    toast.success(editing ? t("departments.toastUpdated") : t("departments.toastCreated"));
     setOpen(false);
     load();
   }
   async function remove(d: Dept) {
-    if (!confirm(`Delete department "${d.name}"?`)) return;
+    if (!confirm(t("departments.confirmDelete", { name: d.name }))) return;
     const res = await fetch(`/api/departments/${d.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      toast.warning(data.error ?? "Failed to delete");
+      toast.warning(data.error ?? t("departments.toastFailedDelete"));
     } else {
-      toast.success(data.deactivated ? "Department deactivated" : "Department deleted");
+      toast.success(data.deactivated ? t("departments.toastDeactivated") : t("departments.toastDeleted"));
     }
     load();
   }
@@ -108,12 +110,12 @@ export default function DepartmentsPage() {
   return (
     <div>
       <PageHeader
-        title="Departments"
-        description="Manage organizational departments"
+        title={t("departments.title")}
+        description={t("departments.subtitle")}
         actions={
           canManage && (
             <Button onClick={openCreate}>
-              <Plus className="h-4 w-4" /> New Department
+              <Plus className="h-4 w-4" /> {t("departments.new")}
             </Button>
           )
         }
@@ -123,26 +125,26 @@ export default function DepartmentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Employees</TableHead>
-                <TableHead>Positions</TableHead>
-                <TableHead>Status</TableHead>
-                {canManage && <TableHead className="text-right">Actions</TableHead>}
+                <TableHead>{t("common.code")}</TableHead>
+                <TableHead>{t("common.name")}</TableHead>
+                <TableHead>{t("departments.colEmployees")}</TableHead>
+                <TableHead>{t("departments.colPositions")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                {canManage && <TableHead className="text-right">{t("common.actions")}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && (
                 <TableRow>
                   <TableCell colSpan={canManage ? 6 : 5} className="text-center text-slate-500">
-                    Loading…
+                    {t("common.loading")}
                   </TableCell>
                 </TableRow>
               )}
               {!loading && items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={canManage ? 6 : 5} className="text-center text-slate-500">
-                    No departments.
+                    {t("departments.none")}
                   </TableCell>
                 </TableRow>
               )}
@@ -153,7 +155,7 @@ export default function DepartmentsPage() {
                   <TableCell>{d._count.employees}</TableCell>
                   <TableCell>{d._count.positions}</TableCell>
                   <TableCell>
-                    {d.isActive ? <Badge variant="success">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
+                    {d.isActive ? <Badge variant="success">{t("common.active")}</Badge> : <Badge variant="secondary">{t("common.inactive")}</Badge>}
                   </TableCell>
                   {canManage && (
                     <TableCell className="text-right space-x-1">
@@ -176,12 +178,12 @@ export default function DepartmentsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Department" : "New Department"}</DialogTitle>
-            <DialogDescription>Set a unique code and name.</DialogDescription>
+            <DialogTitle>{editing ? t("departments.edit") : t("departments.new")}</DialogTitle>
+            <DialogDescription>{t("departments.dialogDescription")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="code">Code</Label>
+              <Label htmlFor="code">{t("common.code")}</Label>
               <Input
                 id="code"
                 value={form.code}
@@ -191,7 +193,7 @@ export default function DepartmentsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("common.name")}</Label>
               <Input
                 id="name"
                 value={form.name}
@@ -207,13 +209,13 @@ export default function DepartmentsPage() {
                 checked={form.isActive}
                 onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
               />
-              <Label htmlFor="isActive">Active</Label>
+              <Label htmlFor="isActive">{t("common.active")}</Label>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">{editing ? "Save" : "Create"}</Button>
+              <Button type="submit">{editing ? t("common.save") : t("common.create")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

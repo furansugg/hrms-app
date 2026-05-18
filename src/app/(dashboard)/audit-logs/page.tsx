@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page-header";
+import { useT } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -33,6 +34,7 @@ type Log = {
 const ENTITIES = ["Employee", "Department", "Position", "Attendance", "LeaveRequest", "PermissionRequest", "Payroll", "Settings", "Report"];
 
 export default function AuditLogsPage() {
+  const { t } = useT();
   const [items, setItems] = useState<Log[]>([]);
   const [entity, setEntity] = useState("");
   const [action, setAction] = useState("");
@@ -56,13 +58,13 @@ export default function AuditLogsPage() {
 
   return (
     <div>
-      <PageHeader title="Audit Logs" description="Trace data changes (who, what, when, IP)" />
+      <PageHeader title={t("audit.title")} description={t("audit.subtitle")} />
       <Card className="mb-4">
         <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
           <div className="space-y-2">
-            <Label>Entity</Label>
+            <Label>{t("audit.filterEntity")}</Label>
             <Select value={entity} onChange={(e) => setEntity(e.target.value)}>
-              <option value="">All</option>
+              <option value="">{t("audit.allEntities")}</option>
               {ENTITIES.map((e) => (
                 <option key={e} value={e}>
                   {e}
@@ -71,11 +73,11 @@ export default function AuditLogsPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Action</Label>
+            <Label>{t("audit.filterAction")}</Label>
             <Input value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. CREATE, APPROVE_LEAVE_HR" />
           </div>
           <Button onClick={load} variant="outline">
-            Apply
+            {t("common.search")}
           </Button>
         </CardContent>
       </Card>
@@ -84,19 +86,19 @@ export default function AuditLogsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>Actor</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Entity</TableHead>
-                <TableHead>Entity ID</TableHead>
-                <TableHead>IP</TableHead>
+                <TableHead>{t("audit.colWhen")}</TableHead>
+                <TableHead>{t("audit.colUser")}</TableHead>
+                <TableHead>{t("audit.colAction")}</TableHead>
+                <TableHead>{t("audit.colEntity")}</TableHead>
+                <TableHead>{t("audit.colEntity")} ID</TableHead>
+                <TableHead>{t("audit.colIP")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-slate-500">
-                    No logs.
+                    {t("audit.none")}
                   </TableCell>
                 </TableRow>
               )}
@@ -105,12 +107,12 @@ export default function AuditLogsPage() {
                   <TableCell className="whitespace-nowrap">{formatDate(l.createdAt, true)}</TableCell>
                   <TableCell>
                     {l.user?.email ?? "system"}
-                    {l.user?.role && <div className="text-xs text-slate-500">{l.user.role}</div>}
+                    {l.user?.role && <div className="text-xs text-slate-500">{t(`role.${l.user.role}`)}</div>}
                   </TableCell>
                   <TableCell className="font-mono text-xs">{l.action}</TableCell>
                   <TableCell>{l.entity}</TableCell>
-                  <TableCell className="font-mono text-xs">{l.entityId ?? "-"}</TableCell>
-                  <TableCell className="font-mono text-xs">{l.ipAddress ?? "-"}</TableCell>
+                  <TableCell className="font-mono text-xs">{l.entityId ?? t("common.dash")}</TableCell>
+                  <TableCell className="font-mono text-xs">{l.ipAddress ?? t("common.dash")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
