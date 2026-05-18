@@ -63,13 +63,13 @@ export async function PUT(req: Request) {
       }
       const user = await prisma.user.findUnique({ where: { id: session.user.id } });
       if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
-      const valid = await bcrypt.compare(body.currentPassword, user.password);
+      const valid = await bcrypt.compare(body.currentPassword, user.passwordHash);
       if (!valid) {
         return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
       }
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { password: await bcrypt.hash(body.newPassword, 12) },
+        data: { passwordHash: await bcrypt.hash(body.newPassword, 12) },
       });
     }
 

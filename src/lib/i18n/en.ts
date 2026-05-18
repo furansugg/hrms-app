@@ -122,7 +122,7 @@ const en = {
     skipped: "Skipped",
     errors: "Errors",
   },
-} as const;
+};
 
 export default en;
 export type Translations = typeof en;
