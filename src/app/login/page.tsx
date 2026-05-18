@@ -14,12 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useT } from "@/lib/i18n/provider";
 
 export const dynamic = "force-dynamic";
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useT();
   const callbackUrl = params.get("callbackUrl") || "/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,10 +38,10 @@ function LoginForm() {
     });
     setLoading(false);
     if (res?.error) {
-      toast.error("Invalid email or password");
+      toast.error(t("login.invalid"));
       return;
     }
-    toast.success("Signed in");
+    toast.success(t("login.signedIn"));
     router.push(res?.url || callbackUrl);
     router.refresh();
   }
@@ -47,7 +49,7 @@ function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("login.email")}</Label>
         <Input
           id="email"
           type="email"
@@ -59,7 +61,7 @@ function LoginForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("login.password")}</Label>
         <Input
           id="password"
           type="password"
@@ -71,13 +73,14 @@ function LoginForm() {
         />
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Signing in…" : "Sign in"}
+        {loading ? t("login.signingIn") : t("login.signIn")}
       </Button>
     </form>
   );
 }
 
 export default function LoginPage() {
+  const { t } = useT();
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <Card className="w-full max-w-md">
@@ -85,15 +88,15 @@ export default function LoginPage() {
           <div className="mx-auto mb-3 h-12 w-12 rounded-lg bg-emerald-500 flex items-center justify-center text-2xl font-bold text-slate-900">
             H
           </div>
-          <CardTitle className="text-2xl">Welcome to HRMS</CardTitle>
-          <CardDescription>Sign in with your work email</CardDescription>
+          <CardTitle className="text-2xl">{t("login.welcome")}</CardTitle>
+          <CardDescription>{t("login.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Suspense fallback={<div className="h-40 animate-pulse rounded bg-slate-100" />}>
             <LoginForm />
           </Suspense>
           <div className="mt-6 rounded-md bg-slate-50 p-3 text-xs text-slate-600">
-            <div className="font-semibold mb-1">Demo accounts (after seeding):</div>
+            <div className="font-semibold mb-1">{t("login.demoAccounts")}</div>
             <div>superadmin@hrms.local / Admin@123</div>
             <div>hr@hrms.local / Hr@1234</div>
             <div>manager@hrms.local / Manager@1</div>
