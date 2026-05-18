@@ -1,0 +1,213 @@
+// Prisma schema for HRMS
+// SQLite is used for portability. Enums are stored as strings (with TS-side
+// constants) because SQLite does not support native enums.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("EMPLOYEE")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  employee      Employee?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employees Employee[]
+  positions Position[]
+}
+
+model Position {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  isActive     Boolean  @default(true)
+  departmentId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department Department? @relation(fields: [departmentId], references: [id])
+  employees  Employee[]
+}
+
+model Employee {
+  id                 String   @id @default(cuid())
+  nik                String   @unique
+  fullName           String
+  email              String   @unique
+  phone              String?
+  address            String?
+  departmentId       String
+  positionId         String
+  supervisorId       String?
+  basicSalary        Float    @default(0)
+  joinDate           DateTime @default(now())
+  status             String   @default("ACTIVE")
+  annualLeaveBalance Int      @default(12)
+  userId             String?  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user               User?               @relation(fields: [userId], references: [id])
+  department         Department          @relation(fields: [departmentId], references: [id])
+  position           Position            @relation(fields: [positionId], references: [id])
+  supervisor         Employee?           @relation("EmployeeSupervisor", fields: [supervisorId], references: [id])
+  subordinates       Employee[]          @relation("EmployeeSupervisor")
+  attendance         Attendance[]
+  leaveRequests      LeaveRequest[]
+  permissionRequests PermissionRequest[]
+  payrolls           Payroll[]
+
+  @@index([departmentId])
+  @@index([positionId])
+  @@index([supervisorId])
+}
+
+model Attendance {
+  id         String    @id @default(cuid())
+  employeeId String
+  date       DateTime
+  checkInAt  DateTime?
+  checkOutAt DateTime?
+  status     String    @default("PRESENT")
+  ipAddress  String?
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+model LeaveRequest {
+  id               String    @id @default(cuid())
+  employeeId       String
+  type             String
+  startDate        DateTime
+  endDate          DateTime
+  days             Int
+  reason           String
+  status           String    @default("PENDING")
+  managerNote      String?
+  hrNote           String?
+  decidedManagerBy String?
+  decidedManagerAt DateTime?
+  decidedHrBy      String?
+  decidedHrAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+model PermissionRequest {
+  id          String    @id @default(cuid())
+  employeeId  String
+  type        String
+  date        DateTime
+  reason      String
+  status      String    @default("PENDING")
+  managerNote String?
+  decidedBy   String?
+  decidedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+model Payroll {
+  id              String   @id @default(cuid())
+  employeeId      String
+  period          String
+  basicSalary     Float
+  allowances      Float    @default(0)
+  deductions      Float    @default(0)
+  lateDays        Int      @default(0)
+  unpaidLeaveDays Int      @default(0)
+  netSalary       Float
+  notes           String?
+  generatedBy     String?
+  generatedAt     DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, period])
+  @@index([period])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   @default("GENERAL")
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  before    String?
+  after     String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model Settings {
+  id                  String   @id @default("singleton")
+  companyName         String   @default("My Company")
+  companyAddress      String?
+  companyEmail        String?
+  companyPhone        String?
+  logoUrl             String?
+  workStartTime       String   @default("08:00")
+  workEndTime         String   @default("17:00")
+  lateThresholdTime   String   @default("08:15")
+  annualLeaveDefault  Int      @default(12)
+  currency            String   @default("IDR")
+  lateDeductionPerDay Float    @default(50000)
+  updatedAt           DateTime @updatedAt @default(now())
+}
