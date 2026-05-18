@@ -37,6 +37,27 @@ async function AdminDashboard() {
     orderBy: { createdAt: "desc" },
     include: { employee: { select: { fullName: true } } },
   });
+
+  const deptData = await prisma.department.findMany({
+    where: { isActive: true },
+    select: { name: true, _count: { select: { employees: true } } },
+    orderBy: { name: "asc" },
+    take: 10,
+  });
+  const deptMax = Math.max(1, ...deptData.map((d) => d._count.employees));
+
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const monthlyLeaves = await prisma.leaveRequest.groupBy({
+    by: ["status"],
+    where: { createdAt: { gte: sixMonthsAgo } },
+    _count: true,
+  });
+  const leaveByStatus = monthlyLeaves.reduce<Record<string, number>>((acc, r) => {
+    acc[r.status] = r._count;
+    return acc;
+  }, {});
+  const leaveStatusMax = Math.max(1, ...Object.values(leaveByStatus));
   return (
     <div className="space-y-6">
       <div>
@@ -49,6 +70,51 @@ async function AdminDashboard() {
         <StatCard icon={CalendarDays} label="Pending Leaves" value={String(leavesPending)} />
         <StatCard icon={Wallet} label="Total Payroll" value={formatCurrency(payroll._sum.netSalary ?? 0)} />
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Employees by Department</CardTitle>
+            <CardDescription>Active departments</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {deptData.map((d) => (
+              <div key={d.name} className="flex items-center gap-3 text-sm">
+                <span className="w-24 truncate text-slate-600">{d.name}</span>
+                <div className="flex-1 h-5 bg-slate-100 rounded-sm overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-sm"
+                    style={{ width: `${(d._count.employees / deptMax) * 100}%` }}
+                  />
+                </div>
+                <span className="w-8 text-right font-medium">{d._count.employees}</span>
+              </div>
+            ))}
+            {deptData.length === 0 && <p className="text-sm text-slate-500">No data.</p>}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Leave Requests by Status</CardTitle>
+            <CardDescription>Last 6 months</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Object.entries(leaveByStatus).map(([status, count]) => (
+              <div key={status} className="flex items-center gap-3 text-sm">
+                <span className="w-32 truncate text-slate-600">{status.replace(/_/g, " ")}</span>
+                <div className="flex-1 h-5 bg-slate-100 rounded-sm overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-sm"
+                    style={{ width: `${(count / leaveStatusMax) * 100}%` }}
+                  />
+                </div>
+                <span className="w-8 text-right font-medium">{count}</span>
+              </div>
+            ))}
+            {Object.keys(leaveByStatus).length === 0 && <p className="text-sm text-slate-500">No data.</p>}
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>

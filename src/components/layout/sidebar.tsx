@@ -20,6 +20,7 @@ import {
   UserCircle,
   Menu,
   X,
+  Upload,
 } from "lucide-react";
 import { Role } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const NAV: NavItem[] = [
   { href: "/reports", label: "Reports", icon: FileBarChart, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER] },
   { href: "/notifications", label: "Notifications", icon: Bell, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
   { href: "/audit-logs", label: "Audit Logs", icon: ScrollText, roles: [Role.SUPER_ADMIN] },
+  { href: "/import", label: "Import", icon: Upload, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
   { href: "/settings", label: "Settings", icon: Settings, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN] },
   { href: "/profile", label: "My Profile", icon: UserCircle, roles: [Role.SUPER_ADMIN, Role.HR_ADMIN, Role.MANAGER, Role.EMPLOYEE] },
 ];

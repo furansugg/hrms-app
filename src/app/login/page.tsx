@@ -73,6 +73,9 @@ function LoginForm() {
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Signing in…" : "Sign in"}
       </Button>
+      <div className="text-center text-sm">
+        <Link href="/forgot-password" className="text-emerald-700 hover:underline">Forgot password?</Link>
+      </div>
     </form>
   );
 }
